@@ -10,7 +10,7 @@ export default function App() {
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const fetchPets = () => {
-    let url = 'http://localhost:8080/api/pets'
+    let url = `${import.meta.env.VITE_API_URL}/api/pets`
     const params = new URLSearchParams()
     if (q) params.set('q', q)
     if (species) params.set('species', species)

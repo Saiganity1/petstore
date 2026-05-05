@@ -16,7 +16,7 @@ export default function AddPetForm({ open, onClose, onPetAdded }) {
         setError('Name and species are required')
         return
       }
-      const res = await fetch('http://localhost:8080/api/pets', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
