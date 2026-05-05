@@ -1,11 +1,12 @@
 package com.petstore.config;
 
-import com.petstore.model.Pet;
-import com.petstore.repository.PetRepository;
+import java.math.BigDecimal;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
+import com.petstore.model.Pet;
+import com.petstore.repository.PetRepository;
 
 @Component
 public class DataLoader implements CommandLineRunner {

@@ -2,12 +2,15 @@ import React, { useEffect, useState } from 'react'
 import { Container, Grid, TextField, MenuItem, Select, InputLabel, FormControl, Button, Box } from '@mui/material'
 import PetCard from './components/PetCard'
 import AddPetForm from './components/AddPetForm'
+import EditPetForm from './components/EditPetForm'
 
 export default function App() {
   const [pets, setPets] = useState([])
   const [q, setQ] = useState('')
   const [species, setSpecies] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [selectedPet, setSelectedPet] = useState(null)
 
   const fetchPets = () => {
     let url = `${import.meta.env.VITE_API_URL}/api/pets`
@@ -21,6 +24,23 @@ export default function App() {
   useEffect(() => {
     fetchPets()
   }, [q, species])
+
+  const handleEditPet = (pet) => {
+    setSelectedPet(pet)
+    setEditDialogOpen(true)
+  }
+
+  const handleDeletePet = async (petId) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pets/${petId}`, {
+        method: 'DELETE'
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      fetchPets()
+    } catch (err) {
+      alert(`Failed to delete pet: ${err.message}`)
+    }
+  }
 
   return (
     <Container sx={{ mt: 4 }}>
@@ -48,12 +68,13 @@ export default function App() {
       <Grid container spacing={2}>
         {pets.map(p => (
           <Grid item key={p.id} xs={12} sm={6} md={4}>
-            <PetCard pet={p} />
+            <PetCard pet={p} onEdit={handleEditPet} onDelete={handleDeletePet} />
           </Grid>
         ))}
       </Grid>
 
       <AddPetForm open={dialogOpen} onClose={() => setDialogOpen(false)} onPetAdded={() => { setDialogOpen(false); fetchPets() }} />
+      <EditPetForm open={editDialogOpen} pet={selectedPet} onClose={() => setEditDialogOpen(false)} onPetUpdated={() => { setEditDialogOpen(false); fetchPets() }} />
     </Container>
   )
 }
