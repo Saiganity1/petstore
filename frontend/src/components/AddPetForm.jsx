@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Box, Button, TextField, MenuItem, Select, InputLabel, FormControl, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material'
+import { Box, Button, TextField, MenuItem, Select, InputLabel, FormControl, Dialog, DialogTitle, DialogContent, DialogActions, Alert, InputAdornment } from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
 
 export default function AddPetForm({ open, onClose, onPetAdded }) {
   const [form, setForm] = useState({ name: '', species: '', age: '', description: '', imageUrl: '', price: '' })
@@ -44,26 +45,103 @@ export default function AddPetForm({ open, onClose, onPetAdded }) {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Add New Pet</DialogTitle>
+      <DialogTitle sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', fontWeight: 'bold', fontSize: '1.3rem' }}>
+        🐾 Add New Pet
+      </DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-        {error && <div style={{ color: 'red' }}>{error}</div>}
-        <TextField label="Name" name="name" value={form.name} onChange={handleChange} fullWidth />
+        {error && <Alert severity="error">{error}</Alert>}
+        
+        <TextField 
+          label="Pet Name" 
+          name="name" 
+          value={form.name} 
+          onChange={handleChange} 
+          fullWidth 
+          placeholder="e.g., Buddy"
+          variant="outlined"
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+        />
+        
         <FormControl fullWidth>
           <InputLabel>Species</InputLabel>
-          <Select name="species" value={form.species} label="Species" onChange={handleChange}>
-            <MenuItem value="Dog">Dog</MenuItem>
-            <MenuItem value="Cat">Cat</MenuItem>
-            <MenuItem value="Bird">Bird</MenuItem>
+          <Select 
+            name="species" 
+            value={form.species} 
+            label="Species" 
+            onChange={handleChange}
+            sx={{ borderRadius: 2 }}
+          >
+            <MenuItem value="">Select a species</MenuItem>
+            <MenuItem value="Dog">🐕 Dog</MenuItem>
+            <MenuItem value="Cat">🐈 Cat</MenuItem>
+            <MenuItem value="Bird">🐦 Bird</MenuItem>
           </Select>
         </FormControl>
-        <TextField label="Age" name="age" type="number" value={form.age} onChange={handleChange} fullWidth />
-        <TextField label="Description" name="description" value={form.description} onChange={handleChange} fullWidth multiline rows={3} />
-        <TextField label="Image URL" name="imageUrl" value={form.imageUrl} onChange={handleChange} fullWidth />
-        <TextField label="Price" name="price" type="number" value={form.price} onChange={handleChange} fullWidth />
+        
+        <TextField 
+          label="Age (years)" 
+          name="age" 
+          type="number" 
+          value={form.age} 
+          onChange={handleChange} 
+          fullWidth 
+          variant="outlined"
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+        />
+        
+        <TextField 
+          label="Description" 
+          name="description" 
+          value={form.description} 
+          onChange={handleChange} 
+          fullWidth 
+          multiline 
+          rows={3}
+          placeholder="Tell us about this pet..."
+          variant="outlined"
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+        />
+        
+        <TextField 
+          label="Image URL" 
+          name="imageUrl" 
+          value={form.imageUrl} 
+          onChange={handleChange} 
+          fullWidth 
+          placeholder="https://example.com/image.jpg"
+          variant="outlined"
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+        />
+        
+        <TextField 
+          label="Price" 
+          name="price" 
+          type="number" 
+          value={form.price} 
+          onChange={handleChange} 
+          fullWidth
+          InputProps={{
+            startAdornment: <InputAdornment position="start">₱</InputAdornment>,
+          }}
+          placeholder="0.00"
+          variant="outlined"
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+        />
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} variant="contained">Add Pet</Button>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={onClose} sx={{ borderRadius: 2 }}>Cancel</Button>
+        <Button 
+          onClick={handleSubmit} 
+          variant="contained" 
+          startIcon={<AddIcon />}
+          sx={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: 2,
+            fontWeight: 'bold'
+          }}
+        >
+          Add Pet
+        </Button>
       </DialogActions>
     </Dialog>
   )
