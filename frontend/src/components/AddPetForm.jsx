@@ -28,12 +28,16 @@ export default function AddPetForm({ open, onClose, onPetAdded }) {
           price: form.price ? parseFloat(form.price) : null
         })
       })
-      if (!res.ok) throw new Error('Failed to add pet')
+      if (!res.ok) {
+        const error = await res.text()
+        throw new Error(`Error: ${res.status} - ${error || 'Failed to add pet'}`)
+      }
       onPetAdded()
       setForm({ name: '', species: '', age: '', description: '', imageUrl: '', price: '' })
       setError('')
       onClose()
     } catch (e) {
+      console.error('Add pet error:', e)
       setError(e.message)
     }
   }
