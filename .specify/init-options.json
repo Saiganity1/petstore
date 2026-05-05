@@ -1,0 +1,5 @@
+{
+  "projectName": "petstore",
+  "language": "java",
+  "frontend": "react-vite"
+}

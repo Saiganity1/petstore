@@ -1,0 +1,5 @@
+{
+  "integrations": [
+    { "name": "docker-compose", "enabled": true }
+  ]
+}
