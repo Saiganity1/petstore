@@ -11,33 +11,48 @@ export default function PetCard({ pet, onEdit, onDelete }) {
   }
 
   return (
-    <Card sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      height: '100%',
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-      '&:hover': {
-        transform: 'translateY(-8px)',
-        boxShadow: '0 12px 28px rgba(102, 126, 234, 0.4)',
-        borderTop: '4px solid #667eea'
-      },
-      borderRadius: 3,
-      overflow: 'hidden'
-    }}>
-      {pet.imageUrl ? (
-        <CardMedia 
-          component="img" 
-          height="200" 
-          image={pet.imageUrl} 
-          alt={pet.name}
-          sx={{ objectFit: 'cover' }}
-        />
-      ) : (
-        <Box sx={{ height: 200, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Typography sx={{ fontSize: 60 }}>🐾</Typography>
-        </Box>
-      )}
+    <Card
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        transition: 'all 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: '0 6px 24px rgba(0,0,0,0.12)',
+        '&:hover': {
+          transform: 'translateY(-6px)',
+          boxShadow: '0 18px 40px rgba(102,126,234,0.18)'
+        },
+        borderRadius: 3,
+        overflow: 'hidden'
+      }}
+    >
+      {/* Aspect-ratio image container for uniform card images */}
+      <Box sx={{ position: 'relative', width: '100%', pt: '62.5%' /* 16:10 ratio */ , backgroundColor: '#f5f7fb' }}>
+        {pet.imageUrl ? (
+          <img
+            src={pet.imageUrl}
+            alt={pet.name}
+            loading="lazy"
+            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/assets/placeholder.png' }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block'
+            }}
+          />
+        ) : (
+          <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography sx={{ fontSize: 48 }}>🐾</Typography>
+          </Box>
+        )}
+
+        {/* Subtle gradient overlay bottom for better text contrast */}
+        <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 64, background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.18) 100%)' }} />
+      </Box>
       
       <CardContent sx={{ flexGrow: 1, background: 'linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(245,245,245,1) 100%)' }}>
         <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 0.5, color: '#333', minHeight: 40 }}>
