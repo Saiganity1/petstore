@@ -21,12 +21,23 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         
-        // Parse allowed origins from environment variable or default
-        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        // Parse allowed origins from environment variable or property
+        String originsToUse = System.getenv("ALLOWED_ORIGINS");
+        if (originsToUse == null) {
+            originsToUse = allowedOrigins;
+        }
+        
+        List<String> origins = Arrays.asList(originsToUse.split(","));
         config.setAllowedOrigins(origins);
         
         config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
+        config.addAllowedMethod("GET");
+        config.addAllowedMethod("POST");
+        config.addAllowedMethod("PUT");
+        config.addAllowedMethod("DELETE");
+        config.addAllowedMethod("OPTIONS");
+        config.setMaxAge(3600L);
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", config);
         return new CorsFilter(source);
