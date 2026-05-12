@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { Container, Grid, TextField, MenuItem, Select, InputLabel, FormControl, Button, Box, Paper, Typography, Chip } from '@mui/material'
+import { Container, Grid, TextField, MenuItem, Select, InputLabel, FormControl, Button, Box, Paper, Typography, Chip, Alert } from '@mui/material'
 import PetsIcon from '@mui/icons-material/Pets'
 import AddIcon from '@mui/icons-material/Add'
 import PetCard from './components/PetCard'
 import AddPetForm from './components/AddPetForm'
 import EditPetForm from './components/EditPetForm'
+import { API_BASE_URL, deletePet, getPets } from './clients/api'
 
 export default function App() {
   const [pets, setPets] = useState([])
@@ -13,14 +14,17 @@ export default function App() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedPet, setSelectedPet] = useState(null)
+  const [loadError, setLoadError] = useState('')
 
-  const fetchPets = () => {
-    let url = `${import.meta.env.VITE_API_URL}/api/pets`
-    const params = new URLSearchParams()
-    if (q) params.set('q', q)
-    if (species) params.set('species', species)
-    if ([...params].length) url += '?' + params.toString()
-    fetch(url).then(r => r.json()).then(setPets).catch(console.error)
+  const fetchPets = async () => {
+    try {
+      setLoadError('')
+      const data = await getPets({ q, species })
+      setPets(data)
+    } catch (err) {
+      setPets([])
+      setLoadError(err.message || `Failed to load pets from ${API_BASE_URL}`)
+    }
   }
 
   useEffect(() => {
@@ -34,10 +38,7 @@ export default function App() {
 
   const handleDeletePet = async (petId) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pets/${petId}`, {
-        method: 'DELETE'
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      await deletePet(petId)
       fetchPets()
     } catch (err) {
       alert(`Failed to delete pet: ${err.message}`)
@@ -58,6 +59,11 @@ export default function App() {
 
         {/* Controls Card */}
         <Paper elevation={3} sx={{ p: 3, mb: 4, backdropFilter: 'blur(10px)', background: 'rgba(255,255,255,0.95)' }}>
+          {loadError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {loadError}
+            </Alert>
+          )}
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={6}>
               <TextField 
