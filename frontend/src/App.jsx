@@ -142,18 +142,21 @@ export default function App() {
                 <SkeletonCard />
               </Grid>
             ))
-          ) : (sortedPets.length > 0 ? (
-            sortedPets.map(p => (
-              <Grid item key={p.id} xs={12} sm={6} md={4}>
-                <PetCard pet={p} onEdit={handleEditPet} onDelete={handleDeletePet} />
+          ) : (
+            sortedPets.length > 0 ? (
+              sortedPets.map(p => (
+                <Grid item key={p.id} xs={12} sm={6} md={4}>
+                  <PetCard pet={p} onEdit={handleEditPet} onDelete={handleDeletePet} />
+                </Grid>
+              ))
+            ) : (
+              <Grid item xs={12}>
+                <Paper sx={{ p: 4, textAlign: 'center', background: 'rgba(255,255,255,0.95)' }}>
+                  <Typography variant="h6" color="textSecondary">No pets found. Try adjusting your filters or add a new pet!</Typography>
+                </Paper>
               </Grid>
-            )) : (
-            <Grid item xs={12}>
-              <Paper sx={{ p: 4, textAlign: 'center', background: 'rgba(255,255,255,0.95)' }}>
-                <Typography variant="h6" color="textSecondary">No pets found. Try adjusting your filters or add a new pet!</Typography>
-              </Paper>
-            </Grid>
-          ))}
+            )
+          )}
         </Grid>
 
         {/* Pagination / load more */}
@@ -169,8 +172,8 @@ export default function App() {
         </Box>
       </Container>
 
-      <AddPetForm open={dialogOpen} onClose={() => setDialogOpen(false)} onPetAdded={() => { setDialogOpen(false); fetchPets() }} />
-      <EditPetForm open={editDialogOpen} pet={selectedPet} onClose={() => setEditDialogOpen(false)} onPetUpdated={() => { setEditDialogOpen(false); fetchPets() }} />
+      <AddPetForm open={dialogOpen} onClose={() => setDialogOpen(false)} onPetAdded={() => { setDialogOpen(false); queryClient.invalidateQueries(['pets']); setPage(0); }} />
+      <EditPetForm open={editDialogOpen} pet={selectedPet} onClose={() => setEditDialogOpen(false)} onPetUpdated={() => { setEditDialogOpen(false); queryClient.invalidateQueries(['pets']); setPage(0); }} />
     </Box>
   )
 }
