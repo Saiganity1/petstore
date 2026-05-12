@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Box, Button, TextField, MenuItem, Select, InputLabel, FormControl, Dialog, DialogTitle, DialogContent, DialogActions, Alert, InputAdornment, CircularProgress } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import { createPet } from '../clients/api'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 
 export default function AddPetForm({ open, onClose, onPetAdded }) {
   const [form, setForm] = useState({ name: '', species: '', age: '', description: '', imageUrl: '', price: '' })
@@ -13,13 +13,16 @@ export default function AddPetForm({ open, onClose, onPetAdded }) {
     setForm(prev => ({ ...prev, [name]: value }))
   }
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const handleSubmit = async () => {
     try {
       if (!form.name || !form.species) {
         setError('Name and species are required')
         return
       }
-      await mutation.mutateAsync({
+      setIsSubmitting(true)
+      await createPet({
         name: form.name,
         species: form.species,
         age: parseInt(form.age, 10) || 0,
@@ -27,6 +30,7 @@ export default function AddPetForm({ open, onClose, onPetAdded }) {
         imageUrl: form.imageUrl,
         price: form.price ? parseFloat(form.price) : null
       })
+      setIsSubmitting(false)
       onPetAdded()
       setForm({ name: '', species: '', age: '', description: '', imageUrl: '', price: '' })
       setError('')
@@ -36,11 +40,6 @@ export default function AddPetForm({ open, onClose, onPetAdded }) {
       setError(e.message)
     }
   }
-
-  const queryClient = useQueryClient()
-  const mutation = useMutation(createPet, {
-    onSuccess: () => queryClient.invalidateQueries(['pets'])
-  })
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>

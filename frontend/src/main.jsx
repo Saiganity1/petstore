@@ -2,10 +2,10 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import './index.css'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+// Temporarily avoid react-query provider due to runtime mismatch on host.
+// We'll use manual fetch logic until the dependency issue is resolved.
 import { ThemeProvider, createTheme } from '@mui/material'
 
-const queryClient = new QueryClient()
 const theme = createTheme({
   palette: {
     primary: { main: '#667eea' },
@@ -15,10 +15,8 @@ const theme = createTheme({
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <App />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ThemeProvider theme={theme}>
+      <App />
+    </ThemeProvider>
   </React.StrictMode>
 )

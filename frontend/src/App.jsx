@@ -8,7 +8,6 @@ import EditPetForm from './components/EditPetForm'
 import { API_BASE_URL, deletePet, getPets } from './clients/api'
 import useDebounce from './hooks/useDebounce'
 import SkeletonCard from './components/SkeletonCard'
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 
 export default function App() {
   const [pets, setPets] = useState([])
@@ -28,21 +27,29 @@ export default function App() {
   })
 
   const debouncedQ = useDebounce(q, 400)
-  const queryClient = useQueryClient()
+  const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(false)
 
-  const { data, isLoading, isError, error, isFetching } = useQuery([
-    'pets',
-    { q: debouncedQ, species, page }
-  ], () => getPets({ q: debouncedQ, species, page, limit: 9 }), {
-    keepPreviousData: true,
-    staleTime: 1000 * 30
-  })
+  const fetchPets = async () => {
+    setIsFetching(true)
+    try {
+      setLoadError('')
+      const data = await getPets({ q: debouncedQ, species, page, limit: 9 })
+      setPets(Array.isArray(data) ? data : [])
+    } catch (err) {
+      setPets([])
+      setLoadError(err.message || `Failed to load pets from ${API_BASE_URL}`)
+    } finally {
+      setIsFetching(false)
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    if (data) setPets(data)
-    if (isError) setLoadError(error?.message || 'Failed to load pets')
-    else setLoadError('')
-  }, [data, isError, error])
+    setIsLoading(true)
+    fetchPets()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQ, species, page])
 
   const handleEditPet = (pet) => {
     setSelectedPet(pet)
@@ -52,7 +59,7 @@ export default function App() {
   const handleDeletePet = async (petId) => {
     try {
       await deletePet(petId)
-      queryClient.invalidateQueries(['pets'])
+      await fetchPets()
     } catch (err) {
       alert(`Failed to delete pet: ${err.message}`)
     }
@@ -172,8 +179,8 @@ export default function App() {
         </Box>
       </Container>
 
-      <AddPetForm open={dialogOpen} onClose={() => setDialogOpen(false)} onPetAdded={() => { setDialogOpen(false); queryClient.invalidateQueries(['pets']); setPage(0); }} />
-      <EditPetForm open={editDialogOpen} pet={selectedPet} onClose={() => setEditDialogOpen(false)} onPetUpdated={() => { setEditDialogOpen(false); queryClient.invalidateQueries(['pets']); setPage(0); }} />
+        <AddPetForm open={dialogOpen} onClose={() => setDialogOpen(false)} onPetAdded={async () => { setDialogOpen(false); await fetchPets(); setPage(0); }} />
+      <EditPetForm open={editDialogOpen} pet={selectedPet} onClose={() => setEditDialogOpen(false)} onPetUpdated={async () => { setEditDialogOpen(false); await fetchPets(); setPage(0); }} />
     </Box>
   )
 }
