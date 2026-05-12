@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, Button, Alert, InputAdornment } from '@mui/material'
 import SaveIcon from '@mui/icons-material/Save'
 import { updatePet } from '../clients/api'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { CircularProgress } from '@mui/material'
 
 export default function EditPetForm({ open, pet, onClose, onPetUpdated }) {
   const [name, setName] = useState('')
@@ -30,20 +32,25 @@ export default function EditPetForm({ open, pet, onClose, onPetUpdated }) {
       return
     }
     try {
-      await updatePet(pet.id, {
+      await mutation.mutateAsync({ id: pet.id, payload: {
         name,
         species,
         age: parseInt(age, 10) || 0,
         description,
         imageUrl,
         price: parseFloat(price) || null
-      })
+      }})
       onPetUpdated()
       onClose()
     } catch (err) {
       setError(err.message || 'Failed to update pet')
     }
   }
+
+  const queryClient = useQueryClient()
+  const mutation = useMutation(({ id, payload }) => updatePet(id, payload), {
+    onSuccess: () => queryClient.invalidateQueries(['pets'])
+  })
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>

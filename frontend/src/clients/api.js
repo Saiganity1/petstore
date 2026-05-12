@@ -1,93 +1,73 @@
-const trimTrailingSlash = (value) => value.replace(/\/+$/, "");
+import axios from 'axios'
+
+const trimTrailingSlash = (value) => value.replace(/\/+$/, "")
 
 const resolveRenderBackendUrl = () => {
-  if (typeof window === "undefined") {
-    return "";
-  }
-
-  const host = window.location.hostname;
-  const match = host.match(/^petstore-frontend(-[a-z0-9]+)?\.onrender\.com$/i);
-  if (!match) {
-    return "";
-  }
-
-  const suffix = match[1] || "";
-  return `https://petstore-backend${suffix}.onrender.com`;
-};
+  if (typeof window === 'undefined') return ''
+  const host = window.location.hostname
+  const match = host.match(/^petstore-frontend(-[a-z0-9]+)?\.onrender\.com$/i)
+  if (!match) return ''
+  const suffix = match[1] || ''
+  return `https://petstore-backend${suffix}.onrender.com`
+}
 
 const resolveApiBaseUrl = () => {
-  const envUrl = (import.meta.env.VITE_API_URL || "").trim();
-  if (envUrl) {
-    return trimTrailingSlash(envUrl);
+  const envUrl = (import.meta.env.VITE_API_URL || '').trim()
+  if (envUrl) return trimTrailingSlash(envUrl)
+  const inferred = resolveRenderBackendUrl()
+  if (inferred) return inferred
+  return 'http://localhost:8080'
+}
+
+export const API_BASE_URL = resolveApiBaseUrl()
+
+const axiosInstance = axios.create({ baseURL: API_BASE_URL, timeout: 20000 })
+
+const normalizeAxiosError = (err) => {
+  if (err.response) {
+    return new Error(`HTTP ${err.response.status} - ${err.response.data || err.response.statusText}`)
   }
+  if (err.request) return new Error('No response received from server')
+  return new Error(err.message)
+}
 
-  const inferredRenderUrl = resolveRenderBackendUrl();
-  if (inferredRenderUrl) {
-    return inferredRenderUrl;
-  }
-
-  return "http://localhost:8080";
-};
-
-export const API_BASE_URL = resolveApiBaseUrl();
-
-const buildError = async (response, fallbackMessage) => {
-  const text = await response.text();
-  const body = text ? ` - ${text}` : "";
-  return new Error(`HTTP ${response.status}${body || ` - ${fallbackMessage}`}`);
-};
-
-const parseResponse = async (response) => {
-  const contentType = response.headers.get("content-type") || "";
-  if (contentType.includes("application/json")) {
-    return response.json();
-  }
-
-  const text = await response.text();
-  if (!text) {
-    return null;
-  }
-
+export const getPets = async ({ q, species, page = 0, limit = 12 } = {}) => {
+  const params = {}
+  if (q) params.q = q
+  if (species) params.species = species
+  params.page = page
+  params.limit = limit
   try {
-    return JSON.parse(text);
-  } catch {
-    return text;
+    const res = await axiosInstance.get('/api/pets', { params })
+    return Array.isArray(res.data) ? res.data : []
+  } catch (err) {
+    throw normalizeAxiosError(err)
   }
-};
+}
 
-const request = async (path, options = {}) => {
-  const response = await fetch(`${API_BASE_URL}${path}`, options);
-  if (!response.ok) {
-    throw await buildError(response, "Request failed");
+export const createPet = async (payload) => {
+  try {
+    const res = await axiosInstance.post('/api/pets', payload)
+    return res.data
+  } catch (err) {
+    throw normalizeAxiosError(err)
   }
-  return parseResponse(response);
-};
+}
 
-export const getPets = async (params = {}) => {
-  const query = new URLSearchParams();
-  if (params.q) query.set("q", params.q);
-  if (params.species) query.set("species", params.species);
+export const updatePet = async (id, payload) => {
+  try {
+    const res = await axiosInstance.put(`/api/pets/${id}`, payload)
+    return res.data
+  } catch (err) {
+    throw normalizeAxiosError(err)
+  }
+}
 
-  const querySuffix = query.toString() ? `?${query.toString()}` : "";
-  const data = await request(`/api/pets${querySuffix}`);
-  return Array.isArray(data) ? data : [];
-};
-
-export const createPet = (payload) =>
-  request("/api/pets", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-export const updatePet = (id, payload) =>
-  request(`/api/pets/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-export const deletePet = (id) =>
-  request(`/api/pets/${id}`, {
-    method: "DELETE",
-  });
+export const deletePet = async (id) => {
+  try {
+    const res = await axiosInstance.delete(`/api/pets/${id}`)
+    return res.data
+  } catch (err) {
+    throw normalizeAxiosError(err)
+  }
+}

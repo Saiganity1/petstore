@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { Box, Button, TextField, MenuItem, Select, InputLabel, FormControl, Dialog, DialogTitle, DialogContent, DialogActions, Alert, InputAdornment } from '@mui/material'
+import { Box, Button, TextField, MenuItem, Select, InputLabel, FormControl, Dialog, DialogTitle, DialogContent, DialogActions, Alert, InputAdornment, CircularProgress } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import { createPet } from '../clients/api'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 export default function AddPetForm({ open, onClose, onPetAdded }) {
   const [form, setForm] = useState({ name: '', species: '', age: '', description: '', imageUrl: '', price: '' })
@@ -18,7 +19,7 @@ export default function AddPetForm({ open, onClose, onPetAdded }) {
         setError('Name and species are required')
         return
       }
-      await createPet({
+      await mutation.mutateAsync({
         name: form.name,
         species: form.species,
         age: parseInt(form.age, 10) || 0,
@@ -35,6 +36,11 @@ export default function AddPetForm({ open, onClose, onPetAdded }) {
       setError(e.message)
     }
   }
+
+  const queryClient = useQueryClient()
+  const mutation = useMutation(createPet, {
+    onSuccess: () => queryClient.invalidateQueries(['pets'])
+  })
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>

@@ -6,11 +6,15 @@ import PetCard from './components/PetCard'
 import AddPetForm from './components/AddPetForm'
 import EditPetForm from './components/EditPetForm'
 import { API_BASE_URL, deletePet, getPets } from './clients/api'
+import useDebounce from './hooks/useDebounce'
+import SkeletonCard from './components/SkeletonCard'
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 
 export default function App() {
   const [pets, setPets] = useState([])
   const [q, setQ] = useState('')
   const [species, setSpecies] = useState('')
+  const [page, setPage] = useState(0)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedPet, setSelectedPet] = useState(null)
@@ -23,20 +27,22 @@ export default function App() {
     return (a.name || '').localeCompare(b.name || '')
   })
 
-  const fetchPets = async () => {
-    try {
-      setLoadError('')
-      const data = await getPets({ q, species })
-      setPets(data)
-    } catch (err) {
-      setPets([])
-      setLoadError(err.message || `Failed to load pets from ${API_BASE_URL}`)
-    }
-  }
+  const debouncedQ = useDebounce(q, 400)
+  const queryClient = useQueryClient()
+
+  const { data, isLoading, isError, error, isFetching } = useQuery([
+    'pets',
+    { q: debouncedQ, species, page }
+  ], () => getPets({ q: debouncedQ, species, page, limit: 9 }), {
+    keepPreviousData: true,
+    staleTime: 1000 * 30
+  })
 
   useEffect(() => {
-    fetchPets()
-  }, [q, species])
+    if (data) setPets(data)
+    if (isError) setLoadError(error?.message || 'Failed to load pets')
+    else setLoadError('')
+  }, [data, isError, error])
 
   const handleEditPet = (pet) => {
     setSelectedPet(pet)
@@ -46,7 +52,7 @@ export default function App() {
   const handleDeletePet = async (petId) => {
     try {
       await deletePet(petId)
-      fetchPets()
+      queryClient.invalidateQueries(['pets'])
     } catch (err) {
       alert(`Failed to delete pet: ${err.message}`)
     }
@@ -130,20 +136,32 @@ export default function App() {
           </Typography>
         </Box>
         <Grid container spacing={3}>
-          {sortedPets.length > 0 ? (
+          {isLoading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <Grid item xs={12} sm={6} md={4} key={i}>
+                <SkeletonCard />
+              </Grid>
+            ))
+          ) : (sortedPets.length > 0 ? (
             sortedPets.map(p => (
               <Grid item key={p.id} xs={12} sm={6} md={4}>
                 <PetCard pet={p} onEdit={handleEditPet} onDelete={handleDeletePet} />
               </Grid>
-            ))
-          ) : (
+            )) : (
             <Grid item xs={12}>
               <Paper sx={{ p: 4, textAlign: 'center', background: 'rgba(255,255,255,0.95)' }}>
                 <Typography variant="h6" color="textSecondary">No pets found. Try adjusting your filters or add a new pet!</Typography>
               </Paper>
             </Grid>
-          )}
+          ))}
         </Grid>
+
+        {/* Pagination / load more */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <Button disabled={isLoading || isFetching} onClick={() => setPage(p => p + 1)}>
+            Load more
+          </Button>
+        </Box>
 
         {/* Footer */}
         <Box sx={{ mt: 6, textAlign: 'center', color: 'white', opacity: 0.8 }}>
