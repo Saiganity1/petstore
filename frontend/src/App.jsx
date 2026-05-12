@@ -16,6 +16,13 @@ export default function App() {
   const [selectedPet, setSelectedPet] = useState(null)
   const [loadError, setLoadError] = useState('')
 
+  const hasFilters = Boolean(q || species)
+  const sortedPets = [...pets].sort((a, b) => {
+    const speciesCompare = (a.species || '').localeCompare(b.species || '')
+    if (speciesCompare !== 0) return speciesCompare
+    return (a.name || '').localeCompare(b.name || '')
+  })
+
   const fetchPets = async () => {
     try {
       setLoadError('')
@@ -58,7 +65,7 @@ export default function App() {
         </Box>
 
         {/* Controls Card */}
-        <Paper elevation={3} sx={{ p: 3, mb: 4, backdropFilter: 'blur(10px)', background: 'rgba(255,255,255,0.95)' }}>
+        <Paper elevation={3} sx={{ p: 3, mb: 4, backdropFilter: 'blur(10px)', background: 'rgba(255,255,255,0.95)', borderRadius: 3 }}>
           {loadError && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {loadError}
@@ -104,17 +111,27 @@ export default function App() {
               </Button>
             </Grid>
           </Grid>
-          <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
             <Chip label={`📊 ${pets.length} pets available`} color="primary" variant="outlined" />
             {species && <Chip label={`Filter: ${species}`} onDelete={() => setSpecies('')} color="secondary" />}
             {q && <Chip label={`Search: "${q}"`} onDelete={() => setQ('')} color="secondary" />}
+            {hasFilters && (
+              <Button size="small" onClick={() => { setQ(''); setSpecies('') }}>
+                Clear filters
+              </Button>
+            )}
           </Box>
         </Paper>
 
         {/* Pet Gallery */}
+        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6" sx={{ color: 'white', fontWeight: 700 }}>
+            Available Pets
+          </Typography>
+        </Box>
         <Grid container spacing={3}>
-          {pets.length > 0 ? (
-            pets.map(p => (
+          {sortedPets.length > 0 ? (
+            sortedPets.map(p => (
               <Grid item key={p.id} xs={12} sm={6} md={4}>
                 <PetCard pet={p} onEdit={handleEditPet} onDelete={handleDeletePet} />
               </Grid>

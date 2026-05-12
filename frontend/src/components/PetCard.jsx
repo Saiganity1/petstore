@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card, CardContent, CardMedia, Typography, Box, Button, Stack } from '@mui/material'
+import { Card, CardContent, CardMedia, Typography, Box, Button } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 
@@ -40,22 +40,37 @@ export default function PetCard({ pet, onEdit, onDelete }) {
       )}
       
       <CardContent sx={{ flexGrow: 1, background: 'linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(245,245,245,1) 100%)' }}>
-        <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 0.5, color: '#333' }}>{pet.name}</Typography>
+        <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 0.5, color: '#333', minHeight: 40 }}>
+          {pet.name}
+        </Typography>
         
         <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
           <Typography variant="body2" sx={{ background: '#667eea', color: 'white', px: 1.5, py: 0.5, borderRadius: 2, fontWeight: 'bold', fontSize: '0.75rem' }}>
             {pet.species}
           </Typography>
           <Typography variant="body2" sx={{ background: '#764ba2', color: 'white', px: 1.5, py: 0.5, borderRadius: 2, fontWeight: 'bold', fontSize: '0.75rem' }}>
-            {pet.age} yrs
+            {pet.age ?? '-'} yrs
           </Typography>
         </Box>
 
-        <Typography variant="body2" sx={{ mt: 1.5, mb: 1.5, color: '#666', lineHeight: 1.5 }}>
-          {pet.description}
+        <Typography
+          variant="body2"
+          sx={{
+            mt: 1.5,
+            mb: 1.5,
+            color: '#666',
+            lineHeight: 1.5,
+            minHeight: 66,
+            display: '-webkit-box',
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden'
+          }}
+        >
+          {pet.description || 'No description provided.'}
         </Typography>
 
-        {pet.price && (
+        {pet.price != null && (
           <Box sx={{ 
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             color: 'white',
@@ -65,7 +80,7 @@ export default function PetCard({ pet, onEdit, onDelete }) {
             mb: 1.5
           }}>
             <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.8rem' }}>Price</Typography>
-            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>₱{pet.price.toFixed(2)}</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>₱{Number(pet.price).toFixed(2)}</Typography>
           </Box>
         )}
       </CardContent>
