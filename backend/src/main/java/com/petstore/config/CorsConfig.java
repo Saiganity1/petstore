@@ -21,14 +21,17 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         
-        // Parse allowed origins from environment variable or property
+        // Get allowed origins from environment, with defaults for development
         String originsToUse = System.getenv("ALLOWED_ORIGINS");
-        if (originsToUse == null) {
-            originsToUse = allowedOrigins;
+        if (originsToUse == null || originsToUse.trim().isEmpty()) {
+            // Default for development and Render deployment with auto-detected URLs
+            originsToUse = "http://localhost:5173,http://127.0.0.1:5173,https://*.onrender.com";
         }
         
         List<String> origins = Arrays.asList(originsToUse.split(","));
-        config.setAllowedOrigins(origins);
+        for (String origin : origins) {
+            config.addAllowedOriginPattern(origin.trim());
+        }
         
         config.addAllowedHeader("*");
         config.addAllowedMethod("GET");

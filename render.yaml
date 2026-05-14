@@ -17,7 +17,7 @@ services:
       - key: DB_PASSWORD
         sync: false
       - key: ALLOWED_ORIGINS
-        value: https://petstore-frontend.onrender.com
+        sync: false
     
   - type: static
     name: petstore-frontend
@@ -25,7 +25,7 @@ services:
     staticPublishPath: ./frontend/dist
     envVars:
       - key: VITE_API_URL
-        value: https://petstore-backend.onrender.com
+        sync: false
 
 databases:
   - name: petstore-db
