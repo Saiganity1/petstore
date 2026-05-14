@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, Button, Alert, InputAdornment } from '@mui/material'
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, Button, Alert, InputAdornment, CircularProgress } from '@mui/material'
 import SaveIcon from '@mui/icons-material/Save'
+import { updatePet } from '../clients/api'
 
 export default function EditPetForm({ open, pet, onClose, onPetUpdated }) {
   const [name, setName] = useState('')
@@ -29,25 +30,23 @@ export default function EditPetForm({ open, pet, onClose, onPetUpdated }) {
       return
     }
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pets/${pet.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          species,
-          age: parseInt(age) || 0,
-          description,
-          imageUrl,
-          price: parseFloat(price) || null
-        })
+      setIsSubmitting(true)
+      await updatePet(pet.id, {
+        name,
+        species,
+        age: parseInt(age, 10) || 0,
+        description,
+        imageUrl,
+        price: parseFloat(price) || null
       })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setIsSubmitting(false)
       onPetUpdated()
       onClose()
     } catch (err) {
       setError(err.message || 'Failed to update pet')
     }
   }
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>

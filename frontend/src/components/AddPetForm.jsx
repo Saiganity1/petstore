@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Box, Button, TextField, MenuItem, Select, InputLabel, FormControl, Dialog, DialogTitle, DialogContent, DialogActions, Alert, InputAdornment } from '@mui/material'
+import { Box, Button, TextField, MenuItem, Select, InputLabel, FormControl, Dialog, DialogTitle, DialogContent, DialogActions, Alert, InputAdornment, CircularProgress } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
+import { createPet } from '../clients/api'
 
 export default function AddPetForm({ open, onClose, onPetAdded }) {
   const [form, setForm] = useState({ name: '', species: '', age: '', description: '', imageUrl: '', price: '' })
@@ -11,28 +12,24 @@ export default function AddPetForm({ open, onClose, onPetAdded }) {
     setForm(prev => ({ ...prev, [name]: value }))
   }
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const handleSubmit = async () => {
     try {
       if (!form.name || !form.species) {
         setError('Name and species are required')
         return
       }
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pets`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name,
-          species: form.species,
-          age: parseInt(form.age) || 0,
-          description: form.description,
-          imageUrl: form.imageUrl,
-          price: form.price ? parseFloat(form.price) : null
-        })
+      setIsSubmitting(true)
+      await createPet({
+        name: form.name,
+        species: form.species,
+        age: parseInt(form.age, 10) || 0,
+        description: form.description,
+        imageUrl: form.imageUrl,
+        price: form.price ? parseFloat(form.price) : null
       })
-      if (!res.ok) {
-        const error = await res.text()
-        throw new Error(`Error: ${res.status} - ${error || 'Failed to add pet'}`)
-      }
+      setIsSubmitting(false)
       onPetAdded()
       setForm({ name: '', species: '', age: '', description: '', imageUrl: '', price: '' })
       setError('')

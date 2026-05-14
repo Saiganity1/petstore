@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: petstore-backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    buildCommand: ""
+    startCommand: ""
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: SERVER_PORT
+        value: 8080
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://petstore-frontend.onrender.com
+    
+  - type: static
+    name: petstore-frontend
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://petstore-backend.onrender.com
+
+databases:
+  - name: petstore-db
+    databaseName: petstore
+    user: petstore
+    plan: free

@@ -1,31 +1,55 @@
 import React, { useEffect, useState } from 'react'
-import { Container, Grid, TextField, MenuItem, Select, InputLabel, FormControl, Button, Box, Paper, Typography, Chip } from '@mui/material'
+import { Container, Grid, TextField, MenuItem, Select, InputLabel, FormControl, Button, Box, Paper, Typography, Chip, Alert } from '@mui/material'
 import PetsIcon from '@mui/icons-material/Pets'
 import AddIcon from '@mui/icons-material/Add'
 import PetCard from './components/PetCard'
 import AddPetForm from './components/AddPetForm'
 import EditPetForm from './components/EditPetForm'
+import { API_BASE_URL, deletePet, getPets } from './clients/api'
+import useDebounce from './hooks/useDebounce'
+import SkeletonCard from './components/SkeletonCard'
 
 export default function App() {
   const [pets, setPets] = useState([])
   const [q, setQ] = useState('')
   const [species, setSpecies] = useState('')
+  const [page, setPage] = useState(0)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedPet, setSelectedPet] = useState(null)
+  const [loadError, setLoadError] = useState('')
 
-  const fetchPets = () => {
-    let url = `${import.meta.env.VITE_API_URL}/api/pets`
-    const params = new URLSearchParams()
-    if (q) params.set('q', q)
-    if (species) params.set('species', species)
-    if ([...params].length) url += '?' + params.toString()
-    fetch(url).then(r => r.json()).then(setPets).catch(console.error)
+  const hasFilters = Boolean(q || species)
+  const sortedPets = [...pets].sort((a, b) => {
+    const speciesCompare = (a.species || '').localeCompare(b.species || '')
+    if (speciesCompare !== 0) return speciesCompare
+    return (a.name || '').localeCompare(b.name || '')
+  })
+
+  const debouncedQ = useDebounce(q, 400)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(false)
+
+  const fetchPets = async () => {
+    setIsFetching(true)
+    try {
+      setLoadError('')
+      const data = await getPets({ q: debouncedQ, species, page, limit: 9 })
+      setPets(Array.isArray(data) ? data : [])
+    } catch (err) {
+      setPets([])
+      setLoadError(err.message || `Failed to load pets from ${API_BASE_URL}`)
+    } finally {
+      setIsFetching(false)
+      setIsLoading(false)
+    }
   }
 
   useEffect(() => {
+    setIsLoading(true)
     fetchPets()
-  }, [q, species])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQ, species, page])
 
   const handleEditPet = (pet) => {
     setSelectedPet(pet)
@@ -34,11 +58,8 @@ export default function App() {
 
   const handleDeletePet = async (petId) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pets/${petId}`, {
-        method: 'DELETE'
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      fetchPets()
+      await deletePet(petId)
+      await fetchPets()
     } catch (err) {
       alert(`Failed to delete pet: ${err.message}`)
     }
@@ -57,7 +78,12 @@ export default function App() {
         </Box>
 
         {/* Controls Card */}
-        <Paper elevation={3} sx={{ p: 3, mb: 4, backdropFilter: 'blur(10px)', background: 'rgba(255,255,255,0.95)' }}>
+        <Paper elevation={3} sx={{ p: 3, mb: 4, backdropFilter: 'blur(10px)', background: 'rgba(255,255,255,0.95)', borderRadius: 3 }}>
+          {loadError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {loadError}
+            </Alert>
+          )}
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={6}>
               <TextField 
@@ -98,29 +124,54 @@ export default function App() {
               </Button>
             </Grid>
           </Grid>
-          <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
             <Chip label={`📊 ${pets.length} pets available`} color="primary" variant="outlined" />
             {species && <Chip label={`Filter: ${species}`} onDelete={() => setSpecies('')} color="secondary" />}
             {q && <Chip label={`Search: "${q}"`} onDelete={() => setQ('')} color="secondary" />}
+            {hasFilters && (
+              <Button size="small" onClick={() => { setQ(''); setSpecies('') }}>
+                Clear filters
+              </Button>
+            )}
           </Box>
         </Paper>
 
         {/* Pet Gallery */}
+        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6" sx={{ color: 'white', fontWeight: 700 }}>
+            Available Pets
+          </Typography>
+        </Box>
         <Grid container spacing={3}>
-          {pets.length > 0 ? (
-            pets.map(p => (
-              <Grid item key={p.id} xs={12} sm={6} md={4}>
-                <PetCard pet={p} onEdit={handleEditPet} onDelete={handleDeletePet} />
+          {isLoading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <Grid item xs={12} sm={6} md={4} key={i}>
+                <SkeletonCard />
               </Grid>
             ))
           ) : (
-            <Grid item xs={12}>
-              <Paper sx={{ p: 4, textAlign: 'center', background: 'rgba(255,255,255,0.95)' }}>
-                <Typography variant="h6" color="textSecondary">No pets found. Try adjusting your filters or add a new pet!</Typography>
-              </Paper>
-            </Grid>
+            sortedPets.length > 0 ? (
+              sortedPets.map(p => (
+                <Grid item key={p.id} xs={12} sm={6} md={4}>
+                  <PetCard pet={p} onEdit={handleEditPet} onDelete={handleDeletePet} />
+                </Grid>
+              ))
+            ) : (
+              <Grid item xs={12}>
+                <Paper sx={{ p: 4, textAlign: 'center', background: 'rgba(255,255,255,0.95)' }}>
+                  <Typography variant="h6" color="textSecondary">No pets found. Try adjusting your filters or add a new pet!</Typography>
+                </Paper>
+              </Grid>
+            )
           )}
         </Grid>
+
+        {/* Pagination / load more */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <Button disabled={isLoading || isFetching} onClick={() => setPage(p => p + 1)}>
+            Load more
+          </Button>
+        </Box>
 
         {/* Footer */}
         <Box sx={{ mt: 6, textAlign: 'center', color: 'white', opacity: 0.8 }}>
@@ -128,8 +179,8 @@ export default function App() {
         </Box>
       </Container>
 
-      <AddPetForm open={dialogOpen} onClose={() => setDialogOpen(false)} onPetAdded={() => { setDialogOpen(false); fetchPets() }} />
-      <EditPetForm open={editDialogOpen} pet={selectedPet} onClose={() => setEditDialogOpen(false)} onPetUpdated={() => { setEditDialogOpen(false); fetchPets() }} />
+        <AddPetForm open={dialogOpen} onClose={() => setDialogOpen(false)} onPetAdded={async () => { setDialogOpen(false); await fetchPets(); setPage(0); }} />
+      <EditPetForm open={editDialogOpen} pet={selectedPet} onClose={() => setEditDialogOpen(false)} onPetUpdated={async () => { setEditDialogOpen(false); await fetchPets(); setPage(0); }} />
     </Box>
   )
 }
